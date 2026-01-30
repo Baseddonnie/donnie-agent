@@ -122,7 +122,7 @@ DONNIE$ > What's the current $DONNIE price and trading volume?
 
 ```bash
 # Download and run installer
-curl -sL https://raw.githubusercontent.com/your-username/donnie/main/install_donnie_en.sh -o install.sh
+curl -sL https://raw.githubusercontent.com/baseddonnie/donnie/main/install_donnie_en.sh -o install.sh
 chmod +x install.sh
 ./install.sh
 
