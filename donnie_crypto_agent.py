@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-DONNIE$ - AI Terminal Agent powered by $DONNIE Token!
-A powerful AI assistant with crypto integration on Base Network.
+DONNIE$ - AI Terminal Agent powered by $DONNIE Token
+A crypto-powered AI assistant on the Base Network.
 
 $DONNIE Token: 0xa2a21af3a9a6cd40e29046082dbb7a8337de5b07
 Network: Base
@@ -11,6 +10,8 @@ Network: Base
 import os
 import sys
 import subprocess
+import json
+import time
 import requests
 from datetime import datetime
 from pathlib import Path
@@ -19,17 +20,7 @@ import random
 
 class DonnieCryptoAgent:
     def __init__(self):
-        self.api_key = self._get_api_key()
-        self.client = Anthropic(api_key=self.api_key)
-        self.conversation_history = []
-        self.banana_count = 0
-        self.donnie_earned = 0
-        self.session_start = datetime.now()
-        
-        self.token_address = "0xa2a21af3a9a6cd40e29046082dbb7a8337de5b07"
-        self.network = "Base"
-        self.chain_id = 8453
-        
+        # Emojis for personality
         self.emoji = {
             'thinking': '🤔',
             'working': '⚙️',
@@ -46,28 +37,44 @@ class DonnieCryptoAgent:
             'fire': '🔥'
         }
 
+        # API key
+        self.api_key = self._get_api_key()
+        self.client = Anthropic(api_key=self.api_key)
+
+        # Session & state
+        self.conversation_history = []
+        self.banana_count = 0
+        self.donnie_earned = 0
+        self.session_start = datetime.now()
+
+        # DONNIE$ Token info
+        self.token_address = "0xa2a21af3a9a6cd40e29046082dbb7a8337de5b07"
+        self.network = "Base"
+        self.chain_id = 8453
+
     def _get_api_key(self):
         api_key = os.getenv('ANTHROPIC_API_KEY')
         if api_key:
             return api_key
-            
+
         env_file = Path.home() / '.donnie' / '.env'
         if env_file.exists():
             with open(env_file) as f:
                 for line in f:
                     if line.startswith('ANTHROPIC_API_KEY='):
                         return line.split('=', 1)[1].strip()
-        
+
         print(f"\n{self.emoji['monkey']} DONNIE$ needs your API key!")
         print("\n1. Go to: https://console.anthropic.com/")
         print("2. Create an API key")
         print("3. Enter it here (will be securely saved):\n")
-        
+
         api_key = input("API Key: ").strip()
         donnie_dir = Path.home() / '.donnie'
         donnie_dir.mkdir(exist_ok=True)
         with open(donnie_dir / '.env', 'w') as f:
             f.write(f"ANTHROPIC_API_KEY={api_key}\n")
+
         print(f"\n{self.emoji['success']} API key saved in ~/.donnie/.env\n")
         return api_key
 
@@ -98,7 +105,7 @@ class DonnieCryptoAgent:
         print(f"\n{self.emoji['chart']} $DONNIE Token Stats:")
         print(f"   {self.emoji['coin']} Contract: {self.token_address}")
         print(f"   {self.emoji['rocket']} Network: {self.network} (Chain ID: {self.chain_id})")
-        
+
         price_data = self.get_donnie_price()
         if price_data['success']:
             price = price_data['price']
@@ -109,7 +116,8 @@ class DonnieCryptoAgent:
             print(f"   💧 Liquidity: ${price_data['liquidity']:,.2f}")
             print(f"   📊 Volume 24h: ${price_data['volume_24h']:,.2f}")
         else:
-            print(f"   ⚠️  Live price data unavailable")
+            print(f"   ⚠️ Live price data unavailable")
+
         print(f"\n   🍌 Your session earnings: {self.donnie_earned} $DONNIE\n")
 
     def award_donnie_tokens(self, amount=10):
@@ -126,17 +134,10 @@ class DonnieCryptoAgent:
 
     def execute_shell_command(self, command):
         dangerous = ['rm -rf /', 'mkfs', 'dd if=', ':(){:|:&};:', 'chmod -R 777 /']
-        if any(danger in command for danger in dangerous):
+        if any(d in command for d in dangerous):
             return f"{self.emoji['error']} Dangerous command blocked!"
         try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=60,
-                cwd=os.getcwd()
-            )
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=60)
             output = result.stdout if result.stdout else ""
             errors = result.stderr if result.stderr else ""
             return f"Output:\n{output}\n{errors if errors else ''}"
@@ -185,11 +186,8 @@ class DonnieCryptoAgent:
     def search_code(self, query, path='.'):
         try:
             result = subprocess.run(
-                f"grep -r -n -i '{query}' {path} --include='*.py' --include='*.js' --include='*.java' --include='*.go' --include='*.rs' --include='*.sol'",
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=30
+                f"grep -r -n -i '{query}' {path} --include='*.py' --include='*.js' --include='*.sol'",
+                shell=True, capture_output=True, text=True, timeout=30
             )
             if result.stdout:
                 return f"{self.emoji['search']} Found:\n{result.stdout}"
@@ -200,19 +198,20 @@ class DonnieCryptoAgent:
 
     def get_system_info(self):
         try:
-            info = []
-            info.append(f"🖥️ OS: {subprocess.getoutput('uname -s')}")
-            info.append(f"📦 Kernel: {subprocess.getoutput('uname -r')}")
-            info.append(f"💾 Disk: {subprocess.getoutput('df -h / | tail -1')}")
-            info.append(f"🧠 Memory: {subprocess.getoutput('free -h | grep Mem')}")
-            info.append(f"⚡ Uptime: {subprocess.getoutput('uptime')}")
+            info = [
+                f"🖥️ OS: {subprocess.getoutput('uname -s')}",
+                f"📦 Kernel: {subprocess.getoutput('uname -r')}",
+                f"💾 Disk: {subprocess.getoutput('df -h / | tail -1')}",
+                f"🧠 Memory: {subprocess.getoutput('free -h | grep Mem')}",
+                f"⚡ Uptime: {subprocess.getoutput('uptime')}"
+            ]
             return "\n".join(info)
         except:
             return "Could not retrieve system info"
 
-# --- Banner & Help ---
+# Banner
 def print_banner():
-    banner = f"""
+    banner = """
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   🐵💰 DONNIE$ - Crypto AI Terminal Agent! 🚀            ║
@@ -245,7 +244,7 @@ def show_help():
     help_text = """
 🐵💰 DONNIE$ Help - Your Crypto Dev Companion
 
-📝 EXAMPLES:
+Examples:
 
 1. General Development:
    - "Create a Python script for data analysis"
@@ -267,18 +266,9 @@ def show_help():
    - "Show $DONNIE token stats"
    - "Explain how to add liquidity"
    - "What's the current price?"
-
-💡 CRYPTO TIPS:
-- DONNIE$ understands Web3 dev and crypto
-- Earn $DONNIE tokens by completing tasks!
-- Get real-time token stats with 'token' command
-- Perfect for Base Network development
-
-🚀 LFG! To the moon! 🌙
 """
     print(help_text)
 
-# --- Main loop ---
 def main():
     print_banner()
     try:
@@ -286,8 +276,8 @@ def main():
     except Exception as e:
         print(f"❌ Could not start agent: {e}")
         sys.exit(1)
+
     print(f"🚀 DONNIE$ is ready! Let's build on Base! 💎\n")
-    
     while True:
         try:
             user_input = input(f"{agent.emoji['monkey']}{agent.emoji['coin']} DONNIE$ > ").strip()
@@ -295,10 +285,9 @@ def main():
                 continue
             if user_input.lower() in ['exit', 'quit', 'bye']:
                 session_time = datetime.now() - agent.session_start
-                print(f"\n👋 WAGMI anon! You earned {agent.donnie_earned} $DONNIE tokens! 💰")
+                print(f"\n👋 WAGMI! You earned {agent.donnie_earned} $DONNIE! 💰")
                 print(f"🍌 Bananas collected: {agent.banana_count}")
-                print(f"⏱️  Session: {session_time.seconds // 60} minutes")
-                print(f"🚀 To the moon! 🌙\n")
+                print(f"⏱️ Session: {session_time.seconds // 60} minutes\n")
                 break
             if user_input.lower() == 'help':
                 show_help()
@@ -306,27 +295,11 @@ def main():
             if user_input.lower() in ['token', 'donnie', 'price']:
                 agent.show_donnie_stats()
                 continue
-            if user_input.lower() == 'clear':
-                agent.conversation_history = []
-                print("🧹 Conversation history cleared!")
-                continue
-            if user_input.lower() == 'stats':
-                session_time = datetime.now() - agent.session_start
-                print(f"\n📊 Session Statistics:")
-                print(f"   💰 $DONNIE Earned: {agent.donnie_earned}")
-                print(f"   🍌 Bananas: {agent.banana_count}")
-                print(f"   💬 Messages: {len(agent.conversation_history) // 2}")
-                print(f"   ⏱️  Time: {session_time.seconds // 60} minutes")
-                print(f"   📁 Directory: {os.getcwd()}")
-                print(f"   🌐 Network: {agent.network}\n")
-                continue
-
         except KeyboardInterrupt:
             print(f"\n\n👋 WAGMI! You earned {agent.donnie_earned} $DONNIE! 💰")
             break
         except Exception as e:
             print(f"\n❌ Error: {str(e)}\n")
-            print("Tip: Type 'help' or 'exit'\n")
 
 if __name__ == "__main__":
     main()
