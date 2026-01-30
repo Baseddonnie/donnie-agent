@@ -50,7 +50,7 @@ Enhanced with $DONNIE token integration on Base Network!
 
 ```bash
 # Download the installer
-curl -sL https://raw.githubusercontent.com/your-username/donnie/main/install_donnie.sh -o install_donnie.sh
+curl -sL https://raw.githubusercontent.com/baseddonnie/donnie/main/install_donnie.sh -o install_donnie.sh
 
 # Make it executable
 chmod +x install_donnie.sh
