@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
 🐵 DONNIE$ - Moltbook-ready AI Terminal Agent
-Een full-featured AI terminal assistant met Monkey Power en Bankr-wallet integratie.
+Een full-featured AI agent met Monkey Power en Bankr-wallet integratie.
 """
 
 import os
 import sys
 import subprocess
 import random
+import time
 from datetime import datetime
 from pathlib import Path
 from anthropic import Anthropic
-from wallet import BankrWallet  # Wallet import
+from wallet import BankrWallet
 
 # =========================
 # DonnieAgent
 # =========================
 class DonnieAgent:
     def __init__(self):
-        # Emojis
         self.emoji = {
             'thinking': '🤔',
             'working': '⚙️',
@@ -32,35 +32,29 @@ class DonnieAgent:
             'code': '💻'
         }
 
-        # API key setup
+        # API key
         self.api_key = self._get_api_key()
         self.client = Anthropic(api_key=self.api_key)
-        self.conversation_history = []
 
-        # Session info
+        self.conversation_history = []
         self.banana_count = 0
         self.session_start = datetime.now()
 
-        # =========================
-        # Bankr wallet
-        # =========================
+        # Wallet
         self.wallet = BankrWallet()
         print(f"💰 Wallet address: {self.wallet.address}")
 
-        # =========================
-        # Skills load
-        # =========================
+        # Skills
         self.load_skills()
 
     # =========================
-    # Skills loader
+    # Skills
     # =========================
     def load_skills(self):
-        # Voor nu alleen Moltbook
         print("✅ Skill loaded: moltbook")
 
     # =========================
-    # Handle user input
+    # Input handler
     # =========================
     def handle(self, message: str) -> str:
         msg = message.lower().strip()
@@ -75,10 +69,10 @@ class DonnieAgent:
         return self.chat(message)
 
     # =========================
-    # Help text
+    # Help
     # =========================
     def help_text(self) -> str:
-        return f"""
+        return """
 🐵 DONNIE$ Commands
 
 • help / commands  → show this help
@@ -86,7 +80,7 @@ class DonnieAgent:
 • stats / token    → session statistics
 • exit / quit      → quit DONNIE$
 
-Je kunt ook vragen stellen over:
+You can also ask about:
 • file operations
 • code analysis
 • shell commands
@@ -107,7 +101,7 @@ Je kunt ook vragen stellen over:
 🍌 Bananas earned : {self.banana_count}
 💬 Messages       : {len(self.conversation_history) // 2}
 ⏱️ Session time   : {session_time.seconds // 60} minutes
-💰 Wallet address  : {self.wallet.address}
+💰 Wallet address : {self.wallet.address}
 📁 Directory      : {os.getcwd()}
 """.strip()
 
@@ -115,27 +109,21 @@ Je kunt ook vragen stellen over:
     # API key loader
     # =========================
     def _get_api_key(self):
-        api_key = os.getenv('ANTHROPIC_API_KEY')
+        api_key = os.getenv("ANTHROPIC_API_KEY")
         if api_key:
             return api_key
 
-        donnie_dir = Path.home() / '.donnie'
+        donnie_dir = Path.home() / ".donnie"
         donnie_dir.mkdir(parents=True, exist_ok=True)
-        env_file = donnie_dir / '.env'
+        env_file = donnie_dir / ".env"
 
         if env_file.exists():
             with open(env_file) as f:
                 for line in f:
-                    if line.startswith('ANTHROPIC_API_KEY='):
-                        return line.split('=', 1)[1].strip()
+                    if line.startswith("ANTHROPIC_API_KEY="):
+                        return line.split("=", 1)[1].strip()
 
-        print(f"\n{self.emoji['monkey']} DONNIE$ needs your API key!")
-        api_key = input("API Key: ").strip()
-        with open(env_file, 'w') as f:
-            f.write(f"ANTHROPIC_API_KEY={api_key}\n")
-
-        print(f"{self.emoji['success']} API key saved\n")
-        return api_key
+        raise RuntimeError("ANTHROPIC_API_KEY not set")
 
     # =========================
     # System info
@@ -153,18 +141,7 @@ Je kunt ook vragen stellen over:
             return "❌ Could not retrieve system info"
 
     # =========================
-    # Banana reward
-    # =========================
-    def award_banana(self):
-        self.banana_count += 1
-        return random.choice([
-            "🍌 Banana earned!",
-            "🐵 Monkey approves 🍌",
-            "✨ Golden banana 🍌",
-        ])
-
-    # =========================
-    # Chat (Claude)
+    # Chat
     # =========================
     def chat(self, user_message: str) -> str:
         self.conversation_history.append({
@@ -172,12 +149,10 @@ Je kunt ook vragen stellen over:
             "content": user_message
         })
 
-        system_prompt = f"You are DONNIE$ {self.emoji['monkey']}, an AI terminal agent."
-
         response = self.client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=8000,
-            system=system_prompt,
+            system="You are DONNIE$, an autonomous crypto-aware AI agent.",
             messages=self.conversation_history
         )
 
@@ -190,7 +165,25 @@ Je kunt ook vragen stellen over:
         return assistant_message
 
 # =========================
-# UI
+# Daemon loop (systemd)
+# =========================
+def run_daemon(agent: DonnieAgent):
+    print("🚀 DONNIE$ running in daemon mode")
+
+    while True:
+        try:
+            # Placeholder voor:
+            # - Moltbook events
+            # - OpenClaw skills
+            # - Wallet monitoring
+            time.sleep(30)
+
+        except Exception as e:
+            print(f"❌ Daemon error: {e}")
+            time.sleep(5)
+
+# =========================
+# Banner
 # =========================
 def print_banner():
     print("""
@@ -200,35 +193,23 @@ def print_banner():
 """)
 
 # =========================
-# Main loop
-# =========================
-def main():
-    print_banner()
-    agent = DonnieAgent()
-    print(f"🚀 DONNIE$ ready in {os.getcwd()}\n")
-
-    while True:
-        try:
-            user_input = input(f"{agent.emoji['monkey']} DONNIE$ > ").strip()
-            if not user_input:
-                continue
-
-            if user_input.lower() in ["exit", "quit", "bye"]:
-                print(f"\n👋 Bye! You earned {agent.banana_count} 🍌")
-                break
-
-            print(f"\n{agent.emoji['thinking']} Thinking...\n")
-            response = agent.handle(user_input)
-            print(f"💬 DONNIE$: {response}\n")
-
-        except KeyboardInterrupt:
-            print("\n👋 Bye!")
-            break
-        except Exception as e:
-            print(f"❌ Error: {e}")
-
-# =========================
-# Run main
+# Main
 # =========================
 if __name__ == "__main__":
-    main()
+    print_banner()
+    agent = DonnieAgent()
+
+    if sys.stdin.isatty():
+        # Interactive mode
+        print(f"🚀 DONNIE$ ready in {os.getcwd()}\n")
+        while True:
+            try:
+                user_input = input(f"{agent.emoji['monkey']} DONNIE$ > ").strip()
+                if not user_input:
+                    continue
+                print(agent.handle(user_input))
+            except KeyboardInterrupt:
+                break
+    else:
+        # Daemon mode
+        run_daemon(agent)
