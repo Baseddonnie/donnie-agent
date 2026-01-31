@@ -1,0 +1,16 @@
+{
+  "name": "DONNIE$",
+  "version": "1.0.0",
+  "description": "Crypto-native AI agent with Web3 and developer skills",
+  "entrypoint": "agent/donnie_crypto_agent.py",
+  "class": "DonnieCryptoAgent",
+  "handler": "handle",
+  "runtime": "python",
+  "env": ["ANTHROPIC_API_KEY"],
+  "capabilities": [
+    "chat",
+    "crypto-data",
+    "web3-knowledge",
+    "system-info"
+  ]
+}
