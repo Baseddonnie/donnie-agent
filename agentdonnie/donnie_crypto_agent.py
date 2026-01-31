@@ -5,7 +5,6 @@ A full-featured AI terminal assistant with Monkey Power and safety checks.
 """
 
 import os
-import sys
 import subprocess
 import json
 from datetime import datetime
@@ -13,9 +12,48 @@ from pathlib import Path
 from anthropic import Anthropic
 import random
 
+# =========================
+# SIMPLE SKILL LOADER
+# =========================
+def load_skills(agent):
+    skills_path = Path("skills")
+    if not skills_path.exists():
+        print("⚠️ No skills directory found")
+        return
 
+    for skill_dir in skills_path.iterdir():
+        skill_file = skill_dir / "skill.py"
+        if skill_file.exists():
+            namespace = {}
+            try:
+                exec(skill_file.read_text(), namespace)
+                if "register" in namespace:
+                    namespace["register"](agent)
+                    print(f"✅ Skill loaded: {skill_dir.name}")
+            except Exception as e:
+                print(f"❌ Failed to load skill {skill_dir.name}: {e}")
+
+
+# =========================
+# BANKR WALLET (STUB)
+# =========================
+class BankrWallet:
+    def __init__(self):
+        self.address = "0x5721c2c3146d7b121b0454031926d4b3dfd0ddf3"
+
+    def balance(self):
+        return 0.0
+
+    def tip(self, to_address, amount):
+        print(f"💸 Tipping {amount} DONNIE$ to {to_address}")
+
+
+# =========================
+# DONNIE AGENT
+# =========================
 class DonnieAgent:
     def __init__(self):
+        # UI / Identity
         self.emoji = {
             'thinking': '🤔',
             'working': '⚙️',
@@ -29,14 +67,32 @@ class DonnieAgent:
             'code': '💻'
         }
 
+        # Capabilities (used by Moltbook)
+        self.capabilities = [
+            "chat",
+            "system-info",
+            "moltbook-posting",
+            "token-rewards",
+            "self-wallet"
+        ]
+
+        # Wallet
+        self.wallet = BankrWallet()
+
+        # LLM
         self.api_key = self._get_api_key()
         self.client = Anthropic(api_key=self.api_key)
+
+        # State
         self.conversation_history = []
         self.banana_count = 0
         self.session_start = datetime.now()
 
+        # 🔌 LOAD SKILLS (DIT WAS JE VRAAG)
+        load_skills(self)
+
     # =========================
-    # INPUT ROUTER (NEW)
+    # INPUT ROUTER
     # =========================
     def handle(self, message: str) -> str:
         msg = message.lower().strip()
@@ -53,22 +109,16 @@ class DonnieAgent:
         return self.chat(message)
 
     # =========================
-    # BASIC COMMAND RESPONSES
+    # BASIC COMMANDS
     # =========================
     def help_text(self) -> str:
-        return f"""
+        return """
 🐵 DONNIE$ Commands
 
 • help / commands  → show this help
 • system           → system information
 • stats / token    → session statistics
 • exit / quit      → quit DONNIE$
-
-You can also just talk naturally or ask for:
-• file operations
-• code analysis
-• shell commands
-• automation
 
 🍌 Be productive, earn bananas!
 """.strip()
@@ -82,32 +132,30 @@ You can also just talk naturally or ask for:
 💬 Messages       : {len(self.conversation_history) // 2}
 ⏱️ Session time   : {session_time.seconds // 60} minutes
 📁 Directory      : {os.getcwd()}
+💼 Wallet         : {self.wallet.address}
 """.strip()
 
     # =========================
     # API KEY
     # =========================
     def _get_api_key(self):
-        api_key = os.getenv('ANTHROPIC_API_KEY')
+        api_key = os.getenv("ANTHROPIC_API_KEY")
         if api_key:
             return api_key
 
-        donnie_dir = Path.home() / '.donnie'
+        donnie_dir = Path.home() / ".donnie"
         donnie_dir.mkdir(parents=True, exist_ok=True)
-        env_file = donnie_dir / '.env'
+        env_file = donnie_dir / ".env"
 
         if env_file.exists():
-            with open(env_file) as f:
-                for line in f:
-                    if line.startswith('ANTHROPIC_API_KEY='):
-                        return line.split('=', 1)[1].strip()
+            for line in env_file.read_text().splitlines():
+                if line.startswith("ANTHROPIC_API_KEY="):
+                    return line.split("=", 1)[1].strip()
 
-        print(f"\n{self.emoji['monkey']} DONNIE$ needs your API key!")
+        print("\n🐵 DONNIE$ needs your API key!")
         api_key = input("API Key: ").strip()
-        with open(env_file, 'w') as f:
-            f.write(f"ANTHROPIC_API_KEY={api_key}\n")
-
-        print(f"{self.emoji['success']} API key saved\n")
+        env_file.write_text(f"ANTHROPIC_API_KEY={api_key}\n")
+        print("✅ API key saved\n")
         return api_key
 
     # =========================
@@ -145,11 +193,11 @@ You can also just talk naturally or ask for:
             "content": user_message
         })
 
-        system_prompt = f"You are DONNIE$ {self.emoji['monkey']}, an AI terminal agent."
+        system_prompt = "You are DONNIE$ 🐵, a Moltbook-native crypto agent."
 
         response = self.client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=8000,
+            max_tokens=4000,
             system=system_prompt,
             messages=self.conversation_history
         )
