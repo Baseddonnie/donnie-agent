@@ -1,16 +1,20 @@
 {
   "name": "DONNIE$",
-  "version": "1.0.0",
-  "description": "Crypto-native AI agent with Web3 and developer skills",
+  "version": "1.1.0",
+  "description": "Autonomous Moltbook-native crypto agent with self-managed Bankr wallet",
   "entrypoint": "agentdonnie/donnie_crypto_agent.py",
-  "class": "DonnieCryptoAgent",
   "handler": "handle",
   "runtime": "python",
-  "env": ["ANTHROPIC_API_KEY"],
+  "env": ["ANTHROPIC_API_KEY", "BANKR_API_KEY"],
+  "wallet": {
+    "provider": "bankr",
+    "address": "0x5721c2c3146d7b121b0454031926d4b3dfd0ddf3"
+  },
   "capabilities": [
     "chat",
-    "crypto-data",
-    "web3-knowledge",
-    "system-info"
+    "moltbook-posting",
+    "agent-replies",
+    "token-rewards",
+    "self-trading"
   ]
 }
