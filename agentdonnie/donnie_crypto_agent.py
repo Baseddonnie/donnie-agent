@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-🐵 DONNIE$ - The Ultimate AI Terminal Agent with Monkey Power!
-A powerful AI assistant that helps you in the terminal.
+🐵 DONNIE$ - Moltbook-ready AI Terminal Agent
+A full-featured AI terminal assistant with Monkey Power and safety checks.
 """
 
 import os
@@ -37,12 +37,15 @@ class DonnieAgent:
         self.session_start = datetime.now()
 
     def _get_api_key(self):
-        """Get API key from environment or .env file."""
+        """Get API key from environment or .env file (Moltbook-safe)."""
         api_key = os.getenv('ANTHROPIC_API_KEY')
         if api_key:
             return api_key
 
-        env_file = Path.home() / '.donnie' / '.env'
+        donnie_dir = Path.home() / '.donnie'
+        donnie_dir.mkdir(parents=True, exist_ok=True)  # FIX: ensure folder exists
+        env_file = donnie_dir / '.env'
+
         if env_file.exists():
             with open(env_file) as f:
                 for line in f:
@@ -55,9 +58,7 @@ class DonnieAgent:
         print("3. Enter it here (will be securely saved):\n")
 
         api_key = input("API Key: ").strip()
-        donnie_dir = Path.home() / '.donnie'
-        donnie_dir.mkdir(exist_ok=True)
-        with open(donnie_dir / '.env', 'w') as f:
+        with open(env_file, 'w') as f:
             f.write(f"ANTHROPIC_API_KEY={api_key}\n")
         print(f"\n{self.emoji['success']} API key saved in ~/.donnie/.env\n")
         return api_key
@@ -157,7 +158,7 @@ class DonnieAgent:
     def chat(self, user_message):
         """Send message to Claude and process tool commands."""
         self.conversation_history.append({"role": "user", "content": user_message})
-        system_prompt = f"""You are DONNIE$ {self.emoji['monkey']}, an AI terminal agent with personality and tools."""
+        system_prompt = f"You are DONNIE$ {self.emoji['monkey']}, an AI terminal agent with personality and tools."
         response = self.client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=8000,
@@ -165,10 +166,10 @@ class DonnieAgent:
             messages=self.conversation_history
         )
         assistant_message = response.content[0].text
-        # Tool processing can be implemented here as before
         self.conversation_history.append({"role": "assistant", "content": assistant_message})
         return assistant_message
 
+# Banner and Help
 def print_banner():
     banner = """
 ╔═══════════════════════════════════════════════════════════╗
@@ -217,6 +218,7 @@ def show_help():
 """
     print(help_text)
 
+# Main loop
 def main():
     print_banner()
     try:
@@ -256,6 +258,7 @@ def main():
             print(f"\n{agent.emoji['thinking']} Thinking...\n")
             response = agent.chat(user_input)
             clean_response = response
+            # Remove tool tags for display
             for tag in ['<command>', '</command>', '<read_file>', '</read_file>', 
                         '<write_file>', '</write_file>', '<list_dir>', '</list_dir>',
                         '<search_code>', '</search_code>', '<system_info/>', '<banana/>',
