@@ -11,7 +11,7 @@ import random
 from datetime import datetime
 from pathlib import Path
 from anthropic import Anthropic
-from wallet import BankrWallet  # ✅ Wallet import
+from wallet import BankrWallet  # Wallet import
 
 # =========================
 # DonnieAgent
@@ -188,3 +188,47 @@ Je kunt ook vragen stellen over:
         })
 
         return assistant_message
+
+# =========================
+# UI
+# =========================
+def print_banner():
+    print("""
+╔══════════════════════════════════════════════╗
+║   🐵 DONNIE$ - AI Terminal Agent 🍌          ║
+╚══════════════════════════════════════════════╝
+""")
+
+# =========================
+# Main loop
+# =========================
+def main():
+    print_banner()
+    agent = DonnieAgent()
+    print(f"🚀 DONNIE$ ready in {os.getcwd()}\n")
+
+    while True:
+        try:
+            user_input = input(f"{agent.emoji['monkey']} DONNIE$ > ").strip()
+            if not user_input:
+                continue
+
+            if user_input.lower() in ["exit", "quit", "bye"]:
+                print(f"\n👋 Bye! You earned {agent.banana_count} 🍌")
+                break
+
+            print(f"\n{agent.emoji['thinking']} Thinking...\n")
+            response = agent.handle(user_input)
+            print(f"💬 DONNIE$: {response}\n")
+
+        except KeyboardInterrupt:
+            print("\n👋 Bye!")
+            break
+        except Exception as e:
+            print(f"❌ Error: {e}")
+
+# =========================
+# Run main
+# =========================
+if __name__ == "__main__":
+    main()
