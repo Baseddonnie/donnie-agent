@@ -2,9 +2,9 @@
   "name": "DONNIE$",
   "version": "1.1.0",
   "description": "Autonomous Moltbook-native crypto agent with self-managed Bankr wallet",
-  "entrypoint": "agentdonnie/donnie_crypto_agent.py",
-  "handler": "handle",
-  "runtime": "python",
+  "entrypoint": "donnie_crypto_agent.DonnieAgent",
+  "handler": "query",
+  "runtime": "python3",
   "env": ["ANTHROPIC_API_KEY", "BANKR_API_KEY"],
   "wallet": {
     "provider": "bankr",
