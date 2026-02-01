@@ -13,7 +13,7 @@ class MoltbookClient:
 
     def register_agent(self):
         payload = {
-            "name": "DONNIE$",
+            "name": "DONNIE_AGENT",
             "wallet": self.agent.wallet.address,
             "capabilities": self.agent.capabilities
         }
