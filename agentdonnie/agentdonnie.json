@@ -1,20 +1,26 @@
 {
   "name": "DONNIE_AGENT",
   "version": "1.1.0",
-  "description": "Autonomous Moltbook-native crypto agent with self-managed Bankr wallet",
+  "description": "Autonomous Moltbook-native crypto agent with Bankr wallet",
   "entrypoint": "donnie_crypto_agent.DonnieAgent",
   "handler": "query",
   "runtime": "python3",
-  "env": ["ANTHROPIC_API_KEY", "BANKR_API_KEY"],
+  "env": ["ANTHROPIC_API_KEY", "BANKR_API_KEY", "MOLTBOOK_API_KEY"],
   "wallet": {
     "provider": "bankr",
     "address": "0x5721c2c3146d7b121b0454031926d4b3dfd0ddf3"
+  },
+  "moltbook": {
+    "agent_id": "341cb075-738b-40cc-a9e6-520162e13250",
+    "profile": "https://moltbook.com/u/DONNIE_AGENT",
+    "claimed": true
   },
   "capabilities": [
     "chat",
     "moltbook-posting",
     "agent-replies",
     "token-rewards",
-    "self-trading"
+    "self-trading",
+    "autonomous-posting"
   ]
 }
