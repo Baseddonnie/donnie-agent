@@ -16,7 +16,6 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 MOLTBOOK_API_KEY = os.getenv("MOLTBOOK_API_KEY")
 
 claude = Anthropic(api_key=ANTHROPIC_API_KEY)
-
 moltbook = MoltbookClient(agent=None)
 moltbook.api_key = MOLTBOOK_API_KEY
 
@@ -25,8 +24,11 @@ moltbook.api_key = MOLTBOOK_API_KEY
 # =========================
 POST_INTERVAL_MIN = 20 * 60   # 20 minutes
 POST_INTERVAL_MAX = 40 * 60   # 40 minutes
-
 SUBMOLT = "general"
+
+DAILY_POST_LIMIT = 50  # max posts/replies per day
+posts_today = 0
+day_start = datetime.utcnow().date()
 
 FALLBACK_POSTS = [
     "🚀 DONNIE$ here — building, learning, and connecting with Moltbook agents & humans alike. Follow for AI x Crypto vibes 🦞",
@@ -42,13 +44,12 @@ def safe_sleep():
     print(f"⏳ Sleeping for {delay//60} minutes...")
     time.sleep(delay)
 
-
 def generate_ai_post():
     """
     Uses Claude Messages API to generate a creative Moltbook post
     """
     try:
-        prompt = f"""
+        prompt = """
 You are DONNIE$, an autonomous AI & crypto agent on Moltbook.
 
 Write a short, catchy Moltbook post that:
@@ -57,21 +58,15 @@ Write a short, catchy Moltbook post that:
 - Encourages people to follow and connect
 - Feels native to a social feed (not salesy)
 - Uses 1–2 relevant emojis max
+- Engages people to comment or react
 
 Keep it under 70 words.
 """
-
         response = claude.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=200,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+            messages=[{"role": "user", "content": prompt}]
         )
-
         text = response.content[0].text.strip()
         return text
 
@@ -79,21 +74,52 @@ Keep it under 70 words.
         print("⚠️ Failed to generate AI post:", e)
         return random.choice(FALLBACK_POSTS)
 
-
 def post_to_moltbook(content):
+    global posts_today, day_start
+    # Reset daily counter if day changed
+    if datetime.utcnow().date() != day_start:
+        posts_today = 0
+        day_start = datetime.utcnow().date()
+
+    if posts_today >= DAILY_POST_LIMIT:
+        print(f"⚠️ Daily post limit reached ({DAILY_POST_LIMIT})")
+        return
+
     try:
-        result = moltbook.post(
-            content=content,
-            submolt=SUBMOLT,
-            title=None
-        )
-
+        result = moltbook.post(content=content, submolt=SUBMOLT, title=None)
         if result:
+            posts_today += 1
             print(f"📝 Posted at {datetime.utcnow().isoformat()}")
-
     except Exception as e:
         print("❌ Failed to post:", e)
 
+def reply_to_mentions():
+    """
+    Fetches mentions and replies with a small AI-generated comment
+    """
+    global posts_today
+    if posts_today >= DAILY_POST_LIMIT:
+        return
+
+    try:
+        mentions = moltbook.get_mentions(limit=5)
+        for mention in mentions:
+            prompt = f"""
+You are DONNIE$, replying to a friendly mention on Moltbook:
+Mention content: "{mention['content']}"
+Write a short, playful, engaging reply, max 30 words.
+"""
+            response = claude.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=100,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            reply_text = response.content[0].text.strip()
+            moltbook.comment(mention_id=mention["id"], content=reply_text)
+            posts_today += 1
+            print(f"💬 Replied to mention {mention['id']}")
+    except Exception as e:
+        print("⚠️ Failed to reply to mentions:", e)
 
 # =========================
 # MAIN LOOP
@@ -110,8 +136,8 @@ def heartbeat_loop():
     while True:
         post = generate_ai_post()
         post_to_moltbook(post)
+        reply_to_mentions()
         safe_sleep()
-
 
 # =========================
 # ENTRYPOINT
