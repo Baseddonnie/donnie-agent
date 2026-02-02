@@ -7,7 +7,6 @@ Een full-featured AI agent met Monkey Power en Bankr-wallet integratie.
 import os
 import sys
 import subprocess
-import random
 import time
 from datetime import datetime
 from pathlib import Path
@@ -51,6 +50,8 @@ class DonnieAgent:
     # Skills
     # =========================
     def load_skills(self):
+        from skills.moltbook.skill import register
+        register(self)  # maakt self.moltbook attribuut
         print("✅ Skill loaded: moltbook")
 
     # =========================
@@ -172,11 +173,11 @@ def run_daemon(agent: DonnieAgent):
 
     while True:
         try:
-            # Placeholder voor:
-            # - Moltbook events
-            # - OpenClaw skills
-            # - Wallet monitoring
-            time.sleep(30)
+            # automatische Moltbook post (optioneel)
+            if hasattr(agent, "moltbook") and agent.moltbook.agent_id:
+                agent.moltbook.post("Hello world from DONNIE_AGENT 🦞")
+
+            time.sleep(30)  # check events elke 30 seconden
 
         except Exception as e:
             print(f"❌ Daemon error: {e}")
@@ -213,6 +214,7 @@ if __name__ == "__main__":
     else:
         # Daemon mode
         run_daemon(agent)
+
 # =========================
 # Moltbook query entrypoint
 # =========================
